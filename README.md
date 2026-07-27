@@ -6,3 +6,14 @@ To be continued.....
 
 
 right now: add UV initialization, install dependencies, add gitignore
+
+Things to explore apart from core code logic.
+VLM
+Weights and biases
+Cloud deployment (probably a cloudfare backend) 
+Distributed training
+Accelrators (is it just device agnostic code?)
+Ray Tune
+Understanding/Revising the mathematics
+Also what is vLLM?
+Proper MLOPS pipeline
