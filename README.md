@@ -7,6 +7,7 @@ To be continued.....
 
 right now: add UV initialization, install dependencies, add gitignore
 
+Hopeful scope over next month
 Things to explore apart from core code logic.
 VLM
 Weights and biases
