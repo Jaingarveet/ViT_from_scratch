@@ -20,3 +20,4 @@ right now: add UV initialization, install dependencies, add gitignore
 * Also what is vLLM?
 * Proper MLOPS pipeline
 * githooks for CI/CD or MLFLOW? Like I am anyways gonna use this for my experiment tracking so...
+* torchmetrics
