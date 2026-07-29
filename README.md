@@ -8,6 +8,11 @@ Plan would be to revise pytorch first -> implement minimal working VLM -> optimi
 production ready structure
 right now: add UV initialization, install dependencies, add gitignore
 
+
+BASELINE?
+collation needed or no?
+
+
 ## Hopeful scope over next month
 
 * Things to explore apart from core code logic.
