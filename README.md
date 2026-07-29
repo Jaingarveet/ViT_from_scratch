@@ -4,7 +4,8 @@ This repo contains my practice of pytorch, I will try building a VLM from scratc
 
 To be continued.....
 
-
+Plan would be to revise pytorch first -> implement minimal working VLM -> optimize it with additional things and
+production ready structure
 right now: add UV initialization, install dependencies, add gitignore
 
 ## Hopeful scope over next month
