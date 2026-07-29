@@ -21,3 +21,4 @@ right now: add UV initialization, install dependencies, add gitignore
 * Proper MLOPS pipeline
 * githooks for CI/CD or MLFLOW? Like I am anyways gonna use this for my experiment tracking so...
 * torchmetrics custom?
+* https://docs.pytorch.org/tutorials/index.html
