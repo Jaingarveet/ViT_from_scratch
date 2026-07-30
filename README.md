@@ -7,7 +7,7 @@ To be continued.....
 Plan would be to revise pytorch first -> implement minimal working VLM -> optimize it with additional things and
 production ready structure
 right now: add UV initialization, install dependencies, add gitignore
-
+We will see, max 1 month
 
 BASELINE?
 collation needed or no?
@@ -28,3 +28,4 @@ collation needed or no?
 * githooks for CI/CD or MLFLOW? Like I am anyways gonna use this for my experiment tracking so...
 * torchmetrics custom?
 * https://docs.pytorch.org/tutorials/index.html
+* try to do as scratch things as possible, custom loss functions and stuff
