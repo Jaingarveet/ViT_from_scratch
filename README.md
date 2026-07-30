@@ -29,3 +29,5 @@ collation needed or no?
 * torchmetrics custom?
 * https://docs.pytorch.org/tutorials/index.html
 * try to do as scratch things as possible, custom loss functions and stuff
+* Add EDA, confusion matrix, correlation(a little skeptical for generative models?)?
+* Things from the lectures and ITDS
