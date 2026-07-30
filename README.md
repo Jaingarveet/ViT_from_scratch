@@ -31,5 +31,6 @@ collation needed or no?
 * try to do as scratch things as possible, custom loss functions and stuff
 * Add EDA, confusion matrix, correlation(a little skeptical for generative models?)?
 * Things from the lectures and ITDS
+* object detection pipeline?
 
 https://pytorch.org/blog/tensor-memory-format-matters/#pytorch-best-practice
