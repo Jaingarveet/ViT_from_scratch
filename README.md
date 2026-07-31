@@ -13,7 +13,7 @@ We will see, max 1 month
 
 BASELINE?
 collation needed or no?
-### implement the loss function yourself.
+**implement the loss function yourself. and manual datasets, like manual things as much as possible but limited overall scope**
 
 ## Hopeful scope over next month
 * No need for custom dataset, get directly from hugging face, instead we will use a custom tokenizer
