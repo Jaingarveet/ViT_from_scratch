@@ -30,6 +30,7 @@ collation needed or no?
 * https://docs.pytorch.org/tutorials/index.html
 * try to do as scratch things as possible, custom loss functions and stuff
 * Add EDA, confusion matrix, correlation(a little skeptical for generative models?)?
+* torchinfo summary
 * Things from the lectures and ITDS for custom loss functions
 * Course related optimizations present in extra curriculars and stuff, like operator fusion
 * object detection pipeline?
