@@ -17,7 +17,7 @@ collation needed or no?
 * No need for custom dataset, get directly from hugging face, instead we will use a custom tokenizer
 * Things to explore apart from core code logic.
 * VLM
-* Weights and biases
+* Weights and biases or MLFLOW?
 * Cloud deployment (probably a cloudfare backend) 
 * Distributed training
 * Accelrators (is it just device agnostic code?)
