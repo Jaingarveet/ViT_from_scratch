@@ -14,7 +14,7 @@ collation needed or no?
 
 
 ## Hopeful scope over next month
-
+* No need for custom dataset, get directly from hugging face, instead we will use a custom tokenizer
 * Things to explore apart from core code logic.
 * VLM
 * Weights and biases
