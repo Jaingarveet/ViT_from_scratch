@@ -9,7 +9,7 @@ To be continued.....
 Plan would be to revise pytorch first -> implement minimal working VLM -> optimize it with additional things and
 production ready structure
 right now: add UV initialization, install dependencies, add gitignore
-We will see, max 1 month
+what benchmarks to add?
 
 BASELINE?
 collation needed or no?
