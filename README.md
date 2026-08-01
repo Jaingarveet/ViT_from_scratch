@@ -14,7 +14,7 @@ what benchmarks to add?
 BASELINE?
 collation needed or no?
 **implement the loss function yourself. and manual datasets, like manual things as much as possible but limited overall scope**
-
+argparsing based workflow or direct main.ipynb and rest in python script?
 ## Hopeful scope over next month
 * No need for custom dataset, get directly from hugging face, instead we will use a custom tokenizer
 * Things to explore apart from core code logic.
