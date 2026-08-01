@@ -11,7 +11,8 @@ production ready structure
 right now: add UV initialization, install dependencies, add gitignore
 what benchmarks to add?
 
-BASELINE?
+BASELINE: I first implement the model using PyTorch primitives to establish a reliable baseline. After validating the pipeline, I progressively replaced key components such as Multi-Head Attention and Transformer blocks with my own implementations, verifying that performance remained consistent through ablation testing.
+
 collation needed or no?
 **implement the loss function yourself. and manual datasets, like manual things as much as possible but limited overall scope**
 argparsing based workflow or direct main.ipynb and rest in python script?
