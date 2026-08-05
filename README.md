@@ -39,7 +39,7 @@ argparsing based workflow or direct main.ipynb and rest in python script?
 * mixed precision training
 * Things from the lectures and ITDS for custom loss functions
 * Course related optimizations present in extra curriculars and stuff, like operator fusion
-* object detection pipeline?
+* check my brainstorm session for more, things like how to test, what kind of tests? What kind of studies?
 * https://pytorch.org/blog/tensor-memory-format-matters/#pytorch-best-practice
 Use dataclasses or Pydantic models for configurations.
 Add type hints throughout the code.
