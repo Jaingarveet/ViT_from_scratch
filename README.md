@@ -15,6 +15,10 @@ BASELINE: I first implement the model using PyTorch primitives to establish a re
 
 Investigate robustness of image-captioning pipelines under controlled visual perturbations and distribution shifts.
 
+# Hopeful scope till october end: 
+https://chatgpt.com/s/t_6a74882a84f081918e6a430092c82fd9
+implement the baseline image captioning model anyways to gradually progress it into object detection in VLM.
+
 collation needed or no?
 **implement the loss function yourself. and manual datasets, like manual things as much as possible but limited overall scope**
 argparsing based workflow or direct main.ipynb and rest in python script?
