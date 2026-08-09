@@ -3,41 +3,42 @@
 from typing import Tuple, List, Dict
 from PIL import Image
 import torch
-import zipfile
 from pathlib import Path
 import requests
+import torchvision
+from torchvision import transforms
 import os
 import random
+import matplotlib.pyplot as plt
 
-def get_data():
-
-  root_path = Path(__file__).parent.resolve()
-  data_path = root_path / "data"
-  image_path = data_path / "pizza_steak_sushi"
-
-  if image_path.is_dir():
-      print(f"{image_path} directory exists.")
-  else:
-      print(f"Did not find {image_path} directory, creating one...")
-      image_path.mkdir(parents=True, exist_ok=True)
-
-      # Download pizza, steak, sushi data
-      with open(data_path / "pizza_steak_sushi.zip", "wb") as f:
-          request = requests.get("https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi.zip")
-          print("Downloading pizza, steak, sushi data...")
-          f.write(request.content)
-
-      # Unzip pizza, steak, sushi data
-      with zipfile.ZipFile(data_path / "pizza_steak_sushi.zip", "r") as zip_ref:
-          print("Unzipping pizza, steak, sushi data...")
-          zip_ref.extractall(image_path)
-
-def walk_through_dir(dir_path):
+def walk_through_dir(dir_path)-> None:
+  """
+  For a directory structure where the root directory contains dataset separated by their labels as name of the sub-directories,
+  this function returns the quantitity of the paths in readable format.
+  INPUT: dir_path: path containing label separated directories for images.
+  """
   for root, dirs, files in os.walk(dir_path):
     print(f"there are {len(dirs)} directories and {len(files)} images in inside {root} directory")
 
-def plot_images(image_paths, transform = None, n=3, seed= 42):
+def get_device() -> str:
+  """
+  Function to return the current available device to be used for computation.
+  """
+  # should I add the mac device thing as well, also would I need to change when I add accelerator?
+  device = "cuda" if torch.cuda.is_available() else "cpu"
+  return device
+
+
+def plot_random_images_from_path(image_paths:Path, transform : transforms.Compose = None, n=3, seed= 42)-> None:
   # customized for plotting transformed image or not 
+  """
+  Plots random images from given path list, try to limit the value of random samples to maximum of 3
+  INPUT: 
+  image_paths: list of paths of images from the working directory of model
+  transform: transformations to be use on the image
+  n: number of images to display (maximum of 3 and default = 3)
+  seed: random seed, DEFAULT = 42
+  """
   random.seed(42)
   random_samples_path = random.sample(image_paths,k=n)
   for image_path in random_samples_path:
@@ -56,29 +57,21 @@ def plot_images(image_paths, transform = None, n=3, seed= 42):
       ax[1].set_title('transformed_image')
       ax[1].axis(False)
 
-def get_device() -> str:
 
-  # should I add the mac device thing as well, also would I need to change when I add accelerator?
-  device = "cuda" if torch.cuda.is_available() else "cpu"
-  return device
-
-
-def find_classes(directory: str)-> Tuple[List[str],Dict[str,int]]:
-
-  class_names = sorted([item.name for item in os.scandir(directory)])
-
-  if not class_names:
-    raise FileNotFoundError(f"Couldn't find any classes in {directory}.")
-  class_to_idx = {name : idx for idx, name in enumerate(class_names)}
-
-  return class_names,class_to_idx
-
-
-def display_random_image(
+def display_random_images_from_dataset(
     dataset: torch.utils.data.Dataset,
     n: int = 10,
     display_shape: bool = True,
-    seed: int = None):
+    seed: int = None) -> None:
+  
+  """
+    Plots random images from across the dataset, try to limit the value of random samples to maximum of 10
+    INPUT: 
+    dataset: torch.utils.data.Dataset to display images from
+    n: number of images to display (maximum of 3 and default = 3)
+    display_shape: Boolean to whether to display the image shape along with the plot or not
+    seed: random seed, DEFAULT = 42
+  """
 
   if n>10:
     n=10
@@ -99,9 +92,12 @@ def display_random_image(
     ax[i].axis(False)
 
 
-
-
-def plot_loss_curves(results:dict) -> None:
+def plot_loss_acc_curves(results:dict) -> None:
+    """
+      Plots the loss and accuracy values obtained from training and testing the model
+      INPUT: 
+      results: dictionary containing keys as train_loss, train_acc, test_loss, test_acc and their corresponding values over epochs as values
+    """
 
     train_loss = results['train_loss']
     train_acc = results['train_acc']
@@ -128,14 +124,20 @@ def plot_loss_curves(results:dict) -> None:
 
     plt.show()
 
-# The 2 functions below (pred_and_plot_image and save_model are from learnpytorch.io course from where I learned this stuff and I use that code normally for my boilerplate.)
-
 def pred_and_plot_image(model: torch.nn.Module,
                         image_path: str,
                         class_names: List[str] = None,
                         transform=None,
-                        device: torch.device = device):
-    """Makes a prediction on a target image and plots the image with its prediction."""
+                        device: torch.device = 'cpu'):
+
+    """Make a prediction on target image and show the image with the predicted label and it's predicted probability.
+    INPUT:
+    model: Model to use for prediction
+    image_path: image path to be read and predict the label and probability for
+    class_names: a list of class names that are predicted on, DEFAULT=None
+    transform: transformations to be used to pre-process the image to be used by the model,DEFAULT=None
+    device: device on which computation to perform on, DEFAULT=cpu
+    """
 
     # 1. Load in image and convert the tensor values to float32
     target_image = torchvision.io.read_image(str(image_path)).type(torch.float32)
@@ -172,9 +174,27 @@ def pred_and_plot_image(model: torch.nn.Module,
     else:
         title = f"Pred: {target_image_pred_label} | Prob: {target_image_pred_probs.max().cpu():.3f}"
     plt.title(title)
-    plt.axis(False);
+    plt.axis(False)
 
+def set_seed(seed:int=42):
+   """
+   sets seed across CPU and GPU operations and for GPU accelration as well.
+   input: seed number
+   """
+   torch.manual_seed(seed)
+   torch.cuda.manual_seed(seed)
 
+def load_model(model: torch.nn.Module,
+               target_dir: str) -> torch.nn.Module:
+  """
+  Loads a pytorch model from a target directory.
+  INPUT:
+  pass a class of the model,
+  pass the target_dir where state_dict is stored,
+  load the model and return it 
+  """
+  model = model.load_stat_dict(torch.load(target_dir))
+  return model
 
 
 def save_model(model: torch.nn.Module,

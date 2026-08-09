@@ -11,7 +11,10 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 def get_data():
-
+  """
+  This function downloads and extracts the dataset we currently use inside a separate directory.
+  Skips downloading if the data already exists.  
+  """
   root_path = Path(__file__).parent.resolve()
   data_path = root_path / "data"
   image_path = data_path / "pizza_steak_sushi"
@@ -35,6 +38,13 @@ def get_data():
 
 
 def find_classes(directory: str)-> Tuple[List[str],Dict[str,int]]:
+  """
+  This function accepts a directory path which is supposed to contain all the images from dataset in the form of separate sub-directories 
+  where each sub-directory's name is the label of that image which helps us find the actual class names.
+  Input: 
+  directory: directory path containing individual sub-directory for each class from dataset
+  Output: a tuple containg the actual class_names as the first argument and a dictionary mapping from class to index as second argument
+  """
 
   class_names = sorted([item.name for item in os.scandir(directory)])
 
@@ -48,6 +58,11 @@ def find_classes(directory: str)-> Tuple[List[str],Dict[str,int]]:
 
 class customImageFolder(Dataset):
   # definitely need to overwrite __getitem__, can __len__ also
+  """ 
+  Custom Dataset implementation to load image from the data directory into a useful pytorch dataset using 
+  torch.utils.data.Dataset. Accepts the target directory containing the data and the transformations to be used on that data as 
+  arguments.
+  """
   def __init__(self,target_directory:str ,transformations = None) -> None:
 
     self.paths = list(Path(target_directory).glob('*/*.jpg'))
@@ -73,22 +88,35 @@ class customImageFolder(Dataset):
       else:
         return image, class_idx
 
-def create_datasets(dir_name: Path, transformations:None) -> Tuple[torch.utils.data.DataLoader,torch.utils.data.DataLoader,list[str],dict[str,int]]:
+def create_datasets(train_dir: Path, 
+                    test_dir: Path,
+                    train_transformations: transforms.Compose = None, 
+                    test_transformations: transforms.Compose = None, 
+                    NUM_WORKERS: int = os.cpu_count(),
+                    BATCH_SIZE: int = 32) -> Tuple[torch.utils.data.DataLoader,torch.utils.data.DataLoader,list[str],dict[str,int]]:
+  """
+  Utilizes the customImageFolder class to create custom datasets for training and testing and respectively creates training and testing dataloaders.
+  INPUT: 
+  train_dir: Path to directory containing training images
+  test_dir: Path to directory containing testing images
+  train_transformations: transformations to be used on the images to train the model
+  test_transformations: transformations to be used on the images to test the model
+  pre-process dataset, DEFAULT=None 
+  NUM_WORKERS: Number of workers to be used for loading data while using dataloader, DEFAULT=os.cpu_count()
+  BATCH_SIZE: Batch size for creating dataloaders, DEFAULT=32
 
-  dataset = customImageFolder(target_directory=dir_name,
-                    transformations= transformations)
-
-def create_dataloaders(train_dir: Path, 
-                       test_dir: Path,
-                       transformations: transforms.Compose = None, 
-                       NUM_WORKERS: int = os.cpu_count(),
-                       BATCH_SIZE: int = 32):
+  RETURNS:
+  train_dataloader: torch.utils.data.DataLoader
+  test_dataloader: torch.utils.data.DataLoader
+  class_names: list containg the actual class_names
+  class_to_idx: dictionary mapping from class to index
+  """
 
   train_dataset = customImageFolder(target_directory=train_dir,
-                    transformations= transformations)
-  
+                    transformations= train_transformations)
+  # separate transformations for training and testing in order to separate cases of data augmentation and similar things
   test_dataset = customImageFolder(target_directory=test_dir,
-                    transformations= transformations)
+                    transformations= test_transformations)
   
   class_names = train_dataset.class_names
   class_to_idx = train_dataset.class_to_idx

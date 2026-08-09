@@ -8,7 +8,22 @@ def train_step(model:torch.nn.Module,
                loss_fn: torch.nn.Module,
                optimizer: torch.optim.Optimizer,
                device: torch.device) -> Tuple[float,float]:
+  """
+    This function contains the training loop which does the forward pass through the model using data obtained from dataloader, 
+    calculates the loss, does backwardpass on loss and finally optimizes the gradients.
+    note: this function only implements a single iteration through complete dataset, not taking epochs into account
 
+    INPUT: 
+    model: Pytorch model or any pre-trained model that is suitable with pytorch api
+    dataloader: training dataloaders for loading the data and labels
+    loss_fn: loss function used for calculating the loss after forward pass
+    optimizer: Optimizer to manage the optimization process of gradients
+    device: Device on which computations will be done
+    
+    OUTPUT: 
+    train_loss: average training loss for the whole dataset
+    train_acc: average training accuracy for the whole dataset
+  """
   model.train()
   model.to(device)
   train_loss = 0
@@ -39,7 +54,21 @@ def test_step(model:torch.nn.Module,
                dataloader: torch.utils.data.DataLoader,
                loss_fn: torch.nn.Module,
                device: torch.device) -> Tuple[float,float]:
-
+  """
+      This function contains the testing loop which does the forward pass through the model using data obtained from dataloader
+      and then calculates the loss.
+      note: this function only implements a single iteration through complete dataset, not taking epochs into account
+  
+      INPUT: 
+      model: Pytorch model or any pre-trained model that is suitable with pytorch api
+      dataloader: testing dataloaders for loading the data and labels
+      loss_fn: loss function used for calculating the loss after forward pass
+      device: Device on which computations will be done
+      
+      OUTPUT: 
+      test_loss: average testing loss for the whole dataset
+      test_acc: average testing accuracy for the whole dataset
+  """
   model.eval()
   model.to(device)
   test_loss = 0
@@ -70,6 +99,22 @@ def train(model:torch.nn.Module,
                device: torch.device,
                loss_fn: torch.nn.Module = nn.CrossEntropyLoss,
                epochs: int = 5):
+  """
+        This function integrates the training and testing loop and trains the given model for 'n' number of epochs and stores the results for individual epochs
+        in a structurized dictionary for representing change of values over iterations.
+    
+        INPUT: 
+        model: Pytorch model or any pre-trained model that is suitable with pytorch api
+        train_dataloader: training dataloaders for loading the data and labels
+        test_dataloader: testing dataloaders for loading the data and labels
+        optimizer: Optimizer to manage the optimization process of gradients
+        loss_fn: loss function used for calculating the loss after forward pass, DEFAULT=nn.CrossEntropyLoss
+        device: Device on which computations will be done
+        epochs: Number of epochs to traing the model for, DEFAULT=5
+        
+        OUTPUT: 
+        results: A dictionary that contains train_loss, train_acc, test_loss, test_acc as keys and their corresponding values over different epochs as values
+  """
 
   results = {'train_loss':[],
              'train_acc':[],

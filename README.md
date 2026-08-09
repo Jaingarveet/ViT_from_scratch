@@ -19,7 +19,25 @@ Investigate robustness of image-captioning pipelines under controlled visual per
 https://chatgpt.com/s/t_6a74882a84f081918e6a430092c82fd9
 implement the baseline image captioning model anyways to gradually progress it into object detection in VLM.
 
+
+
+
 collation needed or no?
+- Go through Model deployment and MLOPs stuff after the actual image captioning pipeline is working.
+- Add logging at the time when we convert the captioning pipeline into a separate python script for running more experiments, along with argparser as well.
+- Add ViT in actual code, experiment with adding a timer for measuring times as logs for training, along with comparing it to pre-trained model
+- - Add annotations in the functions as well
+- add a logger throughout the modular code
+- improve the utility functions
+- add a coefficient matrix and top n most wrong predictions
+- add data augmentation to code as well
+- improve the get_data functions to add data to a particular destination or something, source, destination, remove_source, return image_path
+- use MLFLOW on top of that to track experiments, compare it to the pre-trained ViT model, save model and stuff, checkout the experiment tracking guide for best practices, vertical and horizontal scaling experiments,
+- First add experiment tracking using MLFLOW obviously and add experiments to track vertical and horizontal scaling. Mention the law for vertical scaling or not?
+- Can we also add experiments to use different torch data type for making the model?
+- Take colab subscription to train a private model and publish it on hugging face hub using model quantization and stuff.
+- check if I need to add stratification in preprocessing and lookup never to miss steps in pre-processing
+- - add a logger throughout the modular code later for deployment and monitoring purposes and check if MLFLOW provides a method to deploy models or not? and CI/CD
 **implement the loss function yourself. and manual datasets, like manual things as much as possible but limited overall scope**
 argparsing based workflow or direct main.ipynb and rest in python script?
 ## Hopeful scope over next 3 months:
