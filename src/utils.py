@@ -39,6 +39,9 @@ def plot_random_images_from_path(image_paths:Path, transform : transforms.Compos
   n: number of images to display (maximum of 3 and default = 3)
   seed: random seed, DEFAULT = 42
   """
+  if transform is None:
+     transform = transforms.Compose([transforms.ToTensor()])
+     
   random.seed(42)
   random_samples_path = random.sample(image_paths,k=n)
   for image_path in random_samples_path:
@@ -47,7 +50,9 @@ def plot_random_images_from_path(image_paths:Path, transform : transforms.Compos
       image = Image.open(image_path)
       transformed_image = transform(image).permute(1,2,0)
 
-      fig.suptitle(f"Class: {image_class}")
+          
+      fig_ttl = fig.suptitle(f"Class: {image_class}")
+      fig_ttl.set_position([.5, 0.8])
 
       ax[0].imshow(image)
       ax[0].set_title('original image')
@@ -128,7 +133,7 @@ def pred_and_plot_image(model: torch.nn.Module,
                         image_path: str,
                         class_names: List[str] = None,
                         transform=None,
-                        device: torch.device = 'cpu'):
+                        device: torch.device = 'cpu')->None:
 
     """Make a prediction on target image and show the image with the predicted label and it's predicted probability.
     INPUT:
@@ -146,7 +151,7 @@ def pred_and_plot_image(model: torch.nn.Module,
     target_image = target_image / 255.
 
     # 3. Transform if necessary
-    if transform:
+    if transform is not None:
         target_image = transform(target_image)
 
     # 4. Make sure the model is on the target device
@@ -185,21 +190,22 @@ def set_seed(seed:int=42):
    torch.cuda.manual_seed(seed)
 
 def load_model(model: torch.nn.Module,
-               target_dir: str) -> torch.nn.Module:
+               target_file: str) -> torch.nn.Module:
   """
-  Loads a pytorch model from a target directory.
+  Loads a pytorch model from a target file
   INPUT:
   pass a class of the model,
-  pass the target_dir where state_dict is stored,
+  pass the target_file where state_dict is stored,
   load the model and return it 
   """
-  model = model.load_stat_dict(torch.load(target_dir))
+  assert target_file.endswith(".pth") or target_file.endswith(".pt"), "model_name should end with '.pt' or '.pth' when stored"
+  model.load_state_dict(torch.load(target_file))
   return model
 
 
 def save_model(model: torch.nn.Module,
                target_dir: str,
-               model_name: str):
+               model_name: str) -> None:
   """Saves a PyTorch model to a target directory.
 
   Args:

@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from tqdm.auto import tqdm
 from typing import Tuple
+from datetime import datetime
 
 def train_step(model:torch.nn.Module,
                dataloader: torch.utils.data.DataLoader,
@@ -27,24 +28,28 @@ def train_step(model:torch.nn.Module,
   model.train()
   model.to(device)
   train_loss = 0
+  correct_predictions = 0
+  total_predictions = 0
   train_acc = 0
+  
 
   for i, (X,y) in enumerate(dataloader):
-    X.to(device), y.to(device)
+    X,y = X.to(device), y.to(device)
     pred_logits = model(X)
     loss = loss_fn(pred_logits,y)
     train_loss += loss.item()
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    pred_label = torch.argmax(torch.softmax(pred_logits,dim=1),dim=1)
-    train_acc += (pred_label == y).sum().item() / len(pred_logits)
+    pred_label = torch.argmax(pred_logits,dim=1)
+    correct_predictions += (pred_label == y).sum().item()
+    total_predictions += len(pred_label)
     # this is accuracy on this batch
 
-    print(f"Completed {i} batch out of {len(dataloader)} for training")
+    print(f"Completed {i+1} batch out of {len(dataloader)} for training")
 
   train_loss /= len(dataloader)
-  train_acc /= len(dataloader)
+  train_acc = correct_predictions / total_predictions
   # average batch accuracy
 
   return train_loss, train_acc
@@ -84,7 +89,7 @@ def test_step(model:torch.nn.Module,
       test_acc += (pred_label == y).sum().item() / len(pred_logits)
       # this is accuracy on this batch
 
-      print(f"Completed {i} batch out of {len(dataloader)} for testing")
+      print(f"Completed {i+1} batch out of {len(dataloader)} for testing")
 
     test_loss /= len(dataloader)
     test_acc /= len(dataloader)
@@ -121,6 +126,7 @@ def train(model:torch.nn.Module,
              'test_loss':[],
              'test_acc':[],
              }
+  start_time = datetime.now()
   for epoch in tqdm(range(epochs)):
 
       train_loss, train_acc = train_step(model = model,
