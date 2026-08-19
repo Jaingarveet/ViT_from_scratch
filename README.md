@@ -18,7 +18,7 @@ Investigate robustness of image-captioning pipelines under controlled visual per
 # Hopeful scope till october end: 
 https://chatgpt.com/s/t_6a74882a84f081918e6a430092c82fd9
 implement the baseline image captioning model anyways to gradually progress it into object detection in VLM.
-
+- Ask Ekta vats for model knowledge, and salman toor for things like wether to use redis or something.
 
 
 do the deterministic transformations beforehand before the dataloaders in training loop to prevent the overhead, check profiling for more designs
