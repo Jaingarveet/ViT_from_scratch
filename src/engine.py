@@ -44,6 +44,7 @@ def train_step(model:torch.nn.Module,
     pred_label = torch.argmax(pred_logits,dim=1)
     correct_predictions += (pred_label == y).sum().item()
     total_predictions += len(pred_label)
+    del loss, pred_logits
     # this is accuracy on this batch
 
     print(f"Completed {i+1} batch out of {len(dataloader)} for training")
@@ -80,7 +81,7 @@ def test_step(model:torch.nn.Module,
   test_acc = 0
   with torch.inference_mode():
     for i, (X,y) in enumerate(dataloader):
-      X.to(device), y.to(device)
+      X,y = X.to(device), y.to(device)
       pred_logits = model(X)
       loss = loss_fn(pred_logits,y)
       test_loss += loss.item()
@@ -90,6 +91,7 @@ def test_step(model:torch.nn.Module,
       # this is accuracy on this batch
 
       print(f"Completed {i+1} batch out of {len(dataloader)} for testing")
+      del loss, pred_logits
 
     test_loss /= len(dataloader)
     test_acc /= len(dataloader)

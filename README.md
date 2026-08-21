@@ -55,6 +55,7 @@ apache pulsar for data pre-processing?
 argparsing based workflow or direct main.ipynb and rest in python script?
 ## Hopeful scope over next 3 months:
 * No need for custom dataset, get directly from hugging face, instead we will use a custom tokenizer
+* openCV for video processing
 * Things to explore apart from core code logic.
 * VLM
 * Weights and biases or MLFLOW?

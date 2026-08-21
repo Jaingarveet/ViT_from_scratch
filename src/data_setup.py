@@ -90,9 +90,10 @@ class customImageFolder(Dataset):
 
 def create_datasets(train_dir: Path, 
                     test_dir: Path,
+                    NUM_WORKERS: int,
+                    PIN_MEMORY:bool,
                     train_transformations: transforms.Compose = None, 
-                    test_transformations: transforms.Compose = None, 
-                    NUM_WORKERS: int = os.cpu_count(),
+                    test_transformations: transforms.Compose = None,
                     BATCH_SIZE: int = 32) -> Tuple[torch.utils.data.DataLoader,torch.utils.data.DataLoader,list[str],dict[str,int]]:
   """
   Utilizes the customImageFolder class to create custom datasets for training and testing and respectively creates training and testing dataloaders.
@@ -124,12 +125,14 @@ def create_datasets(train_dir: Path,
   train_dataloader = DataLoader(dataset = train_dataset,
                                 batch_size=BATCH_SIZE,
                                 shuffle=True,
-                                num_workers=NUM_WORKERS)
+                                num_workers=NUM_WORKERS,
+                                pin_memory = PIN_MEMORY)
 
   test_dataloader = DataLoader(dataset = test_dataset,
                                 batch_size=BATCH_SIZE,
                                 shuffle=False,
-                                num_workers=NUM_WORKERS)
+                                num_workers=NUM_WORKERS,
+                                pin_memory = PIN_MEMORY)
 
   return train_dataloader, test_dataloader, class_names, class_to_idx
 
