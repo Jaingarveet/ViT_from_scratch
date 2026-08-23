@@ -3,33 +3,179 @@ from torch import nn
 import torchinfo
 from torchinfo import summary
 
-class VGGMini(nn.Module):
-  def __init__(self, input_channels:int, hidden_channels:int, output_shape: int):
-    """Model architecture copying TinyVGG from:
-    https://poloclub.github.io/cnn-explainer/"""
+class PatchEmbeddings(nn.Module):
+
+  def __init__(self,
+               hidden_dimension:int=768,
+               patch_resolution:int=16,
+               in_channels:int=3):
+
     super().__init__()
-    self.block_1 = nn.Sequential(
-        nn.Conv2d(in_channels=input_channels,out_channels=hidden_channels,kernel_size=3,stride=1,padding=1),
-        nn.ReLU(),
-        nn.Conv2d(in_channels=hidden_channels,out_channels=hidden_channels,kernel_size=3,stride=1,padding=1),
-        nn.ReLU(),
-        nn.MaxPool2d(kernel_size=2,stride=2)
-        # 64 x 64 -> 32 x 32
-    )
-    self.block_2 = nn.Sequential(
-        nn.Conv2d(in_channels=hidden_channels,out_channels=hidden_channels,kernel_size=3,stride=1,padding=1),
-        nn.ReLU(),
-        nn.Conv2d(in_channels=hidden_channels,out_channels=hidden_channels,kernel_size=3,stride=1,padding=1),
-        nn.ReLU(),
-        nn.MaxPool2d(kernel_size=2,stride=2)
-        # 32 x 32 -> 16 x 16
-    )
-    self.classifier = nn.Sequential(
-        nn.Flatten(),
-        # colour channels x flattened image (16*16)
-        nn.Linear(in_features=hidden_channels*16*16,out_features=output_shape)
-    )
+
+    self.create_patches = nn.Unfold(kernel_size=(patch_resolution,patch_resolution),
+                                                    stride=patch_resolution,
+                                                    dilation=1)
+  # torch.Size([1, 768, 196]) -> batchdim, number of pixels inside each flattened block, number of patches
+    self.flattened_patch_size = int(in_channels * (patch_resolution**2))
+    self.project_patches = nn.Linear(in_features=self.flattened_patch_size,
+                                         out_features=hidden_dimension)
 
   def forward(self,x) -> torch.Tensor:
-    # operator fusion
-    return self.classifier(self.block_2(self.block_1(x)))
+    x = self.create_patches(x)
+    x = x.transpose(-2,-1)
+    x = self.project_patches(x)
+    return x
+    # flatten -> linearly project
+
+
+
+# N, num_patches, hidden_size
+class MultiHeadAttention(nn.Module):
+  def __init__(self, num_heads:int, embed_size: int):
+    super().__init__()
+    self.head_dimension = int(embed_size / num_heads)
+    self.num_heads = num_heads
+    # self.attention_heads = nn.ModuleList([SelfAttention(hidden_size = embed_size,
+                                                # KQV_projection_dim = self.head_dimension) for i in range(num_heads)])
+    
+    self.final_linear_post_concat = nn.Linear(in_features=embed_size,out_features=embed_size)
+
+    self.layer_norm = nn.LayerNorm(normalized_shape=embed_size)
+    self.QKV_linear = nn.Linear(in_features= embed_size,
+                                 out_features= int(3 * embed_size))
+
+  def forward(self,x) -> torch.Tensor:
+      x = self.layer_norm(x)
+      N,num_patches, hidden_size = x.shape
+      # N, num_patches, hidden_size ->  N, num_patches, 3 * hidden_size
+      qkv_concat = self.QKV_linear(x)
+      qkv_concat = qkv_concat.reshape(N, num_patches, 3, self.num_heads, self.head_dimension)
+
+      Q,K,V = qkv_concat.permute(2,0,3,1,4)
+      # (3,N,num_heads,num_patches,head_dim)
+
+      K_t = K.transpose(-2,-1)
+      attention = torch.matmul(Q,K_t)
+      scaled_attention = attention / (self.head_dimension ** 0.5)
+      attention_weights = torch.softmax(scaled_attention,dim=-1) # NxN
+      weighted_values = torch.matmul(attention_weights,V)
+      # (N,num_heads,num_patches,head_dim)
+      concat_output = weighted_values.transpose(-3,-2).reshape(N,num_patches,hidden_size)
+
+      # # N, num_patches, num_heads, head_dimension
+      # pre_concat_output = []
+      # for attention_block in self.attention_heads:
+      #   pre_concat_output.append(attention_block(x))
+      #   # check this
+      # concat_output = torch.cat(pre_concat_output,dim=-1)
+      final_output = self.final_linear_post_concat(concat_output)
+
+      return final_output
+
+
+# no dropout is mentioned for MSA and patch_embeddings in training in appendix b -> b.1
+class MLPBlock(nn.Module):
+  def __init__(self,embed_size:int=768,MLP_size:int=3072,dropout_rate:int=0.1):
+    super().__init__()
+
+    self.layer_norm = nn.LayerNorm(normalized_shape=embed_size)
+
+    self.MLP = nn.Sequential(
+        nn.Linear(in_features=embed_size,out_features=MLP_size),
+        nn.GELU(),
+        nn.Dropout(p=dropout_rate), # from table 3
+        nn.Linear(in_features=MLP_size,out_features=embed_size),
+        nn.Dropout(p=dropout_rate))
+
+  def forward(self,x) -> torch.Tensor:
+    post_MLP_output = self.MLP(self.layer_norm(x))
+    return post_MLP_output
+
+class TransformerEncoder(nn.Module):
+  def __init__(self, hidden_size:int=768,
+               MLP_size:int=3072,
+               num_heads:int=12,
+               dropout_rate:int=0.1):
+
+    super().__init__()
+
+    self.MSA = MultiHeadAttention(num_heads = num_heads,
+                                  embed_size = hidden_size)
+
+    self.MLP = MLPBlock(embed_size = hidden_size,
+                        MLP_size=MLP_size,
+                        dropout_rate=dropout_rate)
+
+  def forward(self,x) -> torch.Tensor:
+    # N, num_patches, patch_embedding_projection_out_features .....dimensions of x -> N, num_patches, patch_embedding_projection_out_features
+    msa_residual_output = self.MSA(x) + x
+    # N, num_patches, patch_embedding_projection_out_features
+    mlp_residual_output = self.MLP(msa_residual_output) + msa_residual_output
+
+    return mlp_residual_output
+
+class ViT(nn.Module):
+  def __init__(self,
+               patch_projection_size:int=768,
+               patch_resolution:int=16,
+               BATCH_SIZE:int=64,
+               num_patches:int=196,
+               in_channels:int=3,
+               num_transformer_layers:int=12,
+               dropout_rate:int=0.1,
+               num_heads:int=12,
+               MLP_size:int=3072,
+               num_classes:int = 10
+               ):
+    # Change the parameter and see once how it is working.
+    # number of tansformer encoder layers/blocks in base model ViT is 12
+    super().__init__()
+
+    self.patch_embedding = PatchEmbeddings(in_channels= in_channels,
+                                           hidden_dimension=patch_projection_size,
+                                           patch_resolution=patch_resolution)
+
+    self.class_token = nn.Parameter(torch.randn(1,1,patch_projection_size),
+                                    requires_grad=True)
+
+    self.position_embeddings = nn.Parameter(torch.randn(1,num_patches+1,
+                                                   patch_projection_size),
+                                       requires_grad=True)
+
+    self.transformer_layers = nn.ModuleList([TransformerEncoder(hidden_size=patch_projection_size,
+                                                                MLP_size=MLP_size,
+                                                                num_heads=num_heads,
+                                                                # output dimension of patches = input dimension of MSA
+                                                                dropout_rate=dropout_rate)
+                                                                for _ in range(num_transformer_layers)])
+
+    self.transformer_sequence = nn.Sequential(*self.transformer_layers)
+
+    self.MLP_head = nn.Sequential(
+        nn.LayerNorm(normalized_shape = patch_projection_size),
+        nn.Linear(in_features = patch_projection_size,
+                  out_features = num_classes)
+    )
+    self.batch_size = BATCH_SIZE
+
+  def forward(self, x) -> torch.Tensor:
+    # N = BATCH_SIZE
+    # NCHW -> N,num_patches,P**2.C -> N,num_patches,patch_projection_size
+    flattened_patch_embeddings = self.patch_embedding(x)
+    # check the flattened patch_embeddings here
+    # N, num_patches, patch_projection_size -> N, num_patches, patch_projection_size
+    class_embed = self.class_token.expand(self.batch_size,-1,-1)
+
+    position_embeddings = self.position_embeddings.expand(self.batch_size,-1,-1)
+    
+    position_and_patch_embeddings = torch.cat((class_embed,
+                                               flattened_patch_embeddings),dim=1) + position_embeddings
+
+    # N, num_patches, patch_projection_size -> N, num_patches, patch_projection_size
+    pre_MLP_HEAD_output = self.transformer_sequence(position_and_patch_embeddings)
+
+    # accessing all the very first tokens and it's embeddings to get class_token_embeddings through the batch
+    pred_logits = self.MLP_head(pre_MLP_HEAD_output[:,0])
+
+    return pred_logits
+

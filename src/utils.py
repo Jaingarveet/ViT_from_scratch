@@ -10,6 +10,11 @@ from torchvision import transforms
 import os
 import random
 import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
+from sklearn.metrics import confusion_matrix
+import seaborn as sn
+import pandas as pd
+
 
 def walk_through_dir(dir_path)-> None:
   """
@@ -232,3 +237,58 @@ def save_model(model: torch.nn.Module,
   print(f"[INFO] Saving model to: {model_save_path}")
   torch.save(obj=model.state_dict(),
              f=model_save_path)
+
+def print_patched_image(image:torch.Tensor, label:str, patch_resolution:int=16):
+    fig, ax = plt.subplots(14, 14, figsize=(5,5))
+    permute_image = image.squeeze(dim=0).permute(1,2,0)
+    for i in range(14):
+      for j in range(14):
+        ax[i,j].imshow(permute_image[(i * patch_resolution):((i+1)*patch_resolution),
+                                  (j * patch_resolution):((j+1)*patch_resolution),
+                                  :])
+        ax[i,j].axis(False)
+        plt.suptitle(f"patched version of the image labeled: {label}")
+
+def plot_confusion_matrix(model:torch.nn.Module, dataloader: torch.utils.data, device: str,class_names:list[str]):
+        
+      y_pred = []
+      y_true = []
+
+      # iterate over test data
+      for inputs, labels in tqdm(dataloader):
+              model.to(device), inputs.to(device), labels.to(device)
+              output = model(inputs) # Feed Network
+
+              pred_logits = torch.softmax(output,dim=1)
+              pred_labels = torch.argmax(pred_logits,dim=1).data.cpu().numpy()
+              y_pred.extend(pred_labels) # Save Prediction
+
+              labels = labels.data.cpu().numpy()
+              y_true.extend(labels) # Save Truth
+
+      classes = class_names
+
+      cf_matrix = confusion_matrix(y_true, y_pred)
+      df_cm = pd.DataFrame(cf_matrix , index = [i for i in classes],
+                          columns = [i for i in classes])
+      plt.figure(figsize = (12,7))
+      ax = sn.heatmap(df_cm, annot=True, cmap='Set2')
+      ax.set(xlabel='Predicted labels',ylabel='True labels')
+      plt.show() 
+
+# def profile_vit
+# with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+#              record_shapes=True,
+#              schedule=torch.profiler.schedule(wait=1, warmup=1, active=2)
+#              ) as vit_train_profiler:
+#   with record_function("vit_train__optimizing_debug"):
+#            for _ in range(4):
+#             vit_train_results = train(model = ViT_model,
+#                 train_dataloader= vit_train_dataloader,
+#                 test_dataloader= vit_test_dataloader,
+#                 optimizer= vit_optimizer,
+#                 device = device,
+#                 loss_fn= vit_loss_fn,
+#                 epochs=NUM_EPOCHS
+#                 )
+#             vit_train_profiler.step()

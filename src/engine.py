@@ -37,7 +37,7 @@ def train_step(model:torch.nn.Module,
     X,y = X.to(device), y.to(device)
     pred_logits = model(X)
     loss = loss_fn(pred_logits,y)
-    train_loss += loss.item()
+    train_loss += loss.detach()
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
@@ -49,7 +49,7 @@ def train_step(model:torch.nn.Module,
 
     print(f"Completed {i+1} batch out of {len(dataloader)} for training")
 
-  train_loss /= len(dataloader)
+  train_loss = train_loss.item()/ len(dataloader)
   train_acc = correct_predictions / total_predictions
   # average batch accuracy
 
@@ -84,7 +84,7 @@ def test_step(model:torch.nn.Module,
       X,y = X.to(device), y.to(device)
       pred_logits = model(X)
       loss = loss_fn(pred_logits,y)
-      test_loss += loss.item()
+      test_loss += loss.detach()
 
       pred_label = torch.argmax(torch.softmax(pred_logits,dim=1),dim=1)
       test_acc += (pred_label == y).sum().item() / len(pred_logits)
@@ -93,7 +93,7 @@ def test_step(model:torch.nn.Module,
       print(f"Completed {i+1} batch out of {len(dataloader)} for testing")
       del loss, pred_logits
 
-    test_loss /= len(dataloader)
+    test_loss = test_loss.item() / len(dataloader)
     test_acc /= len(dataloader)
     # average batch accuracy
 
