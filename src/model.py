@@ -6,24 +6,27 @@ from torchinfo import summary
 class PatchEmbeddings(nn.Module):
 
   def __init__(self,
-               hidden_dimension:int=768,
-               patch_resolution:int=16,
-               in_channels:int=3):
+               hidden_dimension:int,
+               patch_resolution:int,
+               in_channels:int):
 
     super().__init__()
+    # Use a CNN over this, NCHW-N,768,14,14 (for original patch_res=16,channels=3)
+    self.create_patches_and_project = nn.Conv2d(in_channels=in_channels,
+                                    out_channels= hidden_dimension,
+                                    kernel_size=(patch_resolution,patch_resolution),
+                                    stride=patch_resolution,
+                                    dilation=1)
 
-    self.create_patches = nn.Unfold(kernel_size=(patch_resolution,patch_resolution),
-                                                    stride=patch_resolution,
-                                                    dilation=1)
-  # torch.Size([1, 768, 196]) -> batchdim, number of pixels inside each flattened block, number of patches
-    self.flattened_patch_size = int(in_channels * (patch_resolution**2))
-    self.project_patches = nn.Linear(in_features=self.flattened_patch_size,
-                                         out_features=hidden_dimension)
+    # self.flattened_patch_size = int(in_channels * (patch_resolution**2))
+    self.flatten_feature_map = nn.Flatten(start_dim=-2, end_dim=-1)
+    # self.project_patches = nn.Linear(in_features=self.flattened_patch_size,
+    #                                      out_features=hidden_dimension)
 
   def forward(self,x) -> torch.Tensor:
-    x = self.create_patches(x)
+    x = self.create_patches_and_project(x)
+    x = self.flatten_feature_map(x)
     x = x.transpose(-2,-1)
-    x = self.project_patches(x)
     return x
     # flatten -> linearly project
 
@@ -75,7 +78,7 @@ class MultiHeadAttention(nn.Module):
 
 # no dropout is mentioned for MSA and patch_embeddings in training in appendix b -> b.1
 class MLPBlock(nn.Module):
-  def __init__(self,embed_size:int=768,MLP_size:int=3072,dropout_rate:int=0.1):
+  def __init__(self,embed_size:int,MLP_size:int,dropout_rate:int):
     super().__init__()
 
     self.layer_norm = nn.LayerNorm(normalized_shape=embed_size)
@@ -92,10 +95,10 @@ class MLPBlock(nn.Module):
     return post_MLP_output
 
 class TransformerEncoder(nn.Module):
-  def __init__(self, hidden_size:int=768,
-               MLP_size:int=3072,
-               num_heads:int=12,
-               dropout_rate:int=0.1):
+  def __init__(self, hidden_size:int,
+               MLP_size:int,
+               num_heads:int,
+               dropout_rate:int):
 
     super().__init__()
 
@@ -116,16 +119,16 @@ class TransformerEncoder(nn.Module):
 
 class ViT(nn.Module):
   def __init__(self,
-               patch_projection_size:int=768,
-               patch_resolution:int=16,
-               BATCH_SIZE:int=64,
-               num_patches:int=196,
-               in_channels:int=3,
-               num_transformer_layers:int=12,
-               dropout_rate:int=0.1,
-               num_heads:int=12,
-               MLP_size:int=3072,
-               num_classes:int = 10
+               patch_projection_size:int,
+               patch_resolution:int,
+               BATCH_SIZE:int,
+               num_patches:int,
+               in_channels:int,
+               num_transformer_layers:int,
+               dropout_rate:int,
+               num_heads:int,
+               MLP_size:int,
+               num_classes:int
                ):
     # Change the parameter and see once how it is working.
     # number of tansformer encoder layers/blocks in base model ViT is 12
