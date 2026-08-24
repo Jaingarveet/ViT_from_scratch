@@ -48,8 +48,10 @@ def train_step(model:torch.nn.Module,
     # this is accuracy on this batch
 
     print(f"Completed {i+1} batch out of {len(dataloader)} for training")
-
-  train_loss = train_loss.item()/ len(dataloader)
+  if device =='cuda':
+    train_loss = train_loss.item()/ len(dataloader)
+  else: 
+    train_loss = train_loss/ len(dataloader)
   train_acc = correct_predictions / total_predictions
   # average batch accuracy
 
@@ -86,14 +88,17 @@ def test_step(model:torch.nn.Module,
       loss = loss_fn(pred_logits,y)
       test_loss += loss.detach()
 
-      pred_label = torch.argmax(torch.softmax(pred_logits,dim=1),dim=1)
+      pred_label = torch.argmax(pred_logits,dim=1)
       test_acc += (pred_label == y).sum().item() / len(pred_logits)
       # this is accuracy on this batch
 
       print(f"Completed {i+1} batch out of {len(dataloader)} for testing")
       del loss, pred_logits
 
-    test_loss = test_loss.item() / len(dataloader)
+    if device =='cuda':
+        test_loss = test_loss.item()/ len(dataloader)
+    else: 
+        test_loss = test_loss/ len(dataloader)
     test_acc /= len(dataloader)
     # average batch accuracy
 

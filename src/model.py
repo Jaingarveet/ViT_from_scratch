@@ -78,7 +78,7 @@ class MultiHeadAttention(nn.Module):
 
 # no dropout is mentioned for MSA and patch_embeddings in training in appendix b -> b.1
 class MLPBlock(nn.Module):
-  def __init__(self,embed_size:int,MLP_size:int,dropout_rate:int):
+  def __init__(self,embed_size:int,MLP_size:int,dropout_rate:float):
     super().__init__()
 
     self.layer_norm = nn.LayerNorm(normalized_shape=embed_size)
@@ -121,7 +121,6 @@ class ViT(nn.Module):
   def __init__(self,
                patch_projection_size:int,
                patch_resolution:int,
-               BATCH_SIZE:int,
                num_patches:int,
                in_channels:int,
                num_transformer_layers:int,
@@ -138,12 +137,10 @@ class ViT(nn.Module):
                                            hidden_dimension=patch_projection_size,
                                            patch_resolution=patch_resolution)
 
-    self.class_token = nn.Parameter(torch.randn(1,1,patch_projection_size),
-                                    requires_grad=True)
+    self.class_token = nn.Parameter(torch.randn(1,1,patch_projection_size) * 0.02) 
 
     self.position_embeddings = nn.Parameter(torch.randn(1,num_patches+1,
-                                                   patch_projection_size),
-                                       requires_grad=True)
+                                                   patch_projection_size)* 0.02)
 
     self.transformer_layers = nn.ModuleList([TransformerEncoder(hidden_size=patch_projection_size,
                                                                 MLP_size=MLP_size,
@@ -159,17 +156,17 @@ class ViT(nn.Module):
         nn.Linear(in_features = patch_projection_size,
                   out_features = num_classes)
     )
-    self.batch_size = BATCH_SIZE
 
   def forward(self, x) -> torch.Tensor:
     # N = BATCH_SIZE
     # NCHW -> N,num_patches,P**2.C -> N,num_patches,patch_projection_size
+    batch_size = x.shape[0]
     flattened_patch_embeddings = self.patch_embedding(x)
     # check the flattened patch_embeddings here
     # N, num_patches, patch_projection_size -> N, num_patches, patch_projection_size
-    class_embed = self.class_token.expand(self.batch_size,-1,-1)
+    class_embed = self.class_token.expand(batch_size,-1,-1)
 
-    position_embeddings = self.position_embeddings.expand(self.batch_size,-1,-1)
+    position_embeddings = self.position_embeddings.expand(batch_size,-1,-1)
     
     position_and_patch_embeddings = torch.cat((class_embed,
                                                flattened_patch_embeddings),dim=1) + position_embeddings
@@ -181,4 +178,3 @@ class ViT(nn.Module):
     pred_logits = self.MLP_head(pre_MLP_HEAD_output[:,0])
 
     return pred_logits
-
