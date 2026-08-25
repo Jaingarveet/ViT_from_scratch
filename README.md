@@ -1,7 +1,4 @@
 # VLM_pipeline
 
-Basic workflow: 
-implement the different parts of the model from scratch using own custom made pytorch blocks, try to overfit them on tiny dataset to understand mathematics and flow of the architecture, replace the from scratch components then with pre-trained backbones and fine-tune them. After that once the baseline is reproduced move on to the Scene relationships graphs flow.
-
-This is my case study of trying to implement some paper results that would help me implement a VLM pipeline for object detection on images(might add video processing if not a big scope) and use the object bboxes to extract semantic relationships between objects inside a single image, I feel like this would be pretty useful in things like healthcare, traffic videos where just regular classification might incur some false negatives whose cost is extremely high and I think adding a relationship between objects adds up an additional validation layer?
-Also Like I will try to extend this much project by adding a way to introduce find semantic relationships or generate relationships graph between objects detected. Since that also can be treated as pretty much a token generation task for this kind of architecture as long as pre-processing is done right?
+Motivation:
+This repo was my practice of lower level pytorch just to revise the dimensionality and optimizations that we need to take care while moving from conceptual to practical implementation. Like using Batched tensor operations for MHA instead of a for loop, accumulating training loss and only calculating it once per epoch after detaching it from the computation graph, learned more lower profiling of DL models like Cuda synch, profile warmups, chrome trace and compute vs overhead bound. This was mainly done so that I can revise the practical pytorch which I didn't touch in over a year and also get back into habit of reading papers. 
