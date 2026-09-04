@@ -9,7 +9,7 @@ def train_step(model:torch.nn.Module,
                loss_fn: torch.nn.Module,
                optimizer: torch.optim.Optimizer,
                device: torch.device) -> Tuple[float,float]:
-  """
+    """
     This function contains the training loop which does the forward pass through the model using data obtained from dataloader, 
     calculates the loss, does backwardpass on loss and finally optimizes the gradients.
     note: this function only implements a single iteration through complete dataset, not taking epochs into account
@@ -24,45 +24,47 @@ def train_step(model:torch.nn.Module,
     OUTPUT: 
     train_loss: average training loss for the whole dataset
     train_acc: average training accuracy for the whole dataset
-  """
-  model.train()
-  model.to(device)
-  train_loss = 0
-  correct_predictions = 0
-  total_predictions = 0
-  train_acc = 0
-  
+    """
+    model.train()
+    model.to(device)
 
-  for i, (X,y) in enumerate(dataloader):
-    X,y = X.to(device), y.to(device)
-    pred_logits = model(X)
-    loss = loss_fn(pred_logits,y)
-    train_loss += loss.detach()
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    pred_label = torch.argmax(pred_logits,dim=1)
-    correct_predictions += (pred_label == y).sum().item()
-    total_predictions += len(pred_label)
-    del loss, pred_logits
-    # this is accuracy on this batch
+    train_loss = 0.0
+    correct_predictions = 0
+    total_predictions = 0
 
-    print(f"Completed {i+1} batch out of {len(dataloader)} for training")
-  if device =='cuda':
-    train_loss = train_loss.item()/ len(dataloader)
-  else: 
-    train_loss = train_loss/ len(dataloader)
-  train_acc = correct_predictions / total_predictions
-  # average batch accuracy
+    for i, (X, y) in enumerate(dataloader):
 
-  return train_loss, train_acc
+        X, y = X.to(device), y.to(device)
+
+        pred_logits = model(X)
+
+        loss = loss_fn(pred_logits, y)
+
+        train_loss += loss.detach()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        pred_label = torch.argmax(pred_logits, dim=1)
+        correct_predictions += (pred_label == y).sum().item()
+        total_predictions += y.size(0)
+
+        print(f"Completed {i+1} batch out of {len(dataloader)} for training")
+
+
+    train_loss = (train_loss / len(dataloader)).item()
+
+    train_acc = correct_predictions / total_predictions
+
+    return train_loss, train_acc
 
 
 def test_step(model:torch.nn.Module,
                dataloader: torch.utils.data.DataLoader,
                loss_fn: torch.nn.Module,
                device: torch.device) -> Tuple[float,float]:
-  """
+    """
       This function contains the testing loop which does the forward pass through the model using data obtained from dataloader
       and then calculates the loss.
       note: this function only implements a single iteration through complete dataset, not taking epochs into account
@@ -76,31 +78,31 @@ def test_step(model:torch.nn.Module,
       OUTPUT: 
       test_loss: average testing loss for the whole dataset
       test_acc: average testing accuracy for the whole dataset
-  """
-  model.eval()
-  model.to(device)
-  test_loss = 0
-  test_acc = 0
-  with torch.inference_mode():
-    for i, (X,y) in enumerate(dataloader):
-      X,y = X.to(device), y.to(device)
-      pred_logits = model(X)
-      loss = loss_fn(pred_logits,y)
-      test_loss += loss.detach()
+    """
+    model.eval()
+    model.to(device)
 
-      pred_label = torch.argmax(pred_logits,dim=1)
-      test_acc += (pred_label == y).sum().item() / len(pred_logits)
-      # this is accuracy on this batch
+    test_loss = 0.0
+    correct_predictions = 0
+    total_predictions = 0
 
-      print(f"Completed {i+1} batch out of {len(dataloader)} for testing")
-      del loss, pred_logits
+    with torch.inference_mode():
 
-    if device =='cuda':
-        test_loss = test_loss.item()/ len(dataloader)
-    else: 
-        test_loss = test_loss/ len(dataloader)
-    test_acc /= len(dataloader)
-    # average batch accuracy
+        for i, (X, y) in enumerate(dataloader):
+
+            X, y = X.to(device), y.to(device)
+            pred_logits = model(X)
+            loss = loss_fn(pred_logits, y)
+            test_loss += loss.detach()
+
+            pred_label = torch.argmax(pred_logits, dim=1)
+            correct_predictions += (pred_label == y).sum().item()
+            total_predictions += y.size(0)
+
+            print(f"Completed {i+1} batch out of {len(dataloader)} for testing")
+
+    test_loss = (test_loss / len(dataloader)).item()
+    test_acc = correct_predictions / total_predictions
 
     return test_loss, test_acc
 
